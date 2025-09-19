@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from modules import auth
 from modules.data import load_master, update_row
 from modules.ui import header, filter_panel, kpi_row
@@ -43,9 +43,9 @@ def show_login():
                 st.error("Invalid credentials.")
 
     with tab_token:
-        token = st.text_input("Paste token from link", placeholder="eyJyb2xlIjoiZWRpdG9yIi4uLg==.signature")
+        token = st.text_input("Paste token from link", placeholder="e.g. Ab3x7DzQ")
         if st.button("Continue as Editor", type="primary"):
-            data = auth.verify(token)
+            data = auth.verify_short_token(token)
             if data and data.get("role") == "editor":
                 st.session_state.role = "editor"
                 st.session_state.username = "Client"
@@ -97,7 +97,7 @@ def edit_view(warehouse: str | None):
     df = st.session_state.df
     if warehouse:
         df = df[df["Warehouse"] == warehouse]
-    df_f = filter_panel(df)
+    df_f = filter_df = filter_panel(df)
     kpi_row(df_f)
 
     st.write("Select a row to update status and invoice:")
@@ -157,13 +157,13 @@ def page_admin():
         st.stop()
     header(st.session_state.company)
     st.subheader("Admin")
-    st.caption("Create a temporary Editor token (signed, no database required).")
+    st.caption("Create a temporary short Editor token (easy to share).")
 
     col1, col2 = st.columns(2)
     company = col1.text_input("Company on reports", value=st.session_state.company)
     hours = col2.number_input("Hours Valid", min_value=1, max_value=72, value=4, step=1)
     if st.button("Generate Token", type="primary"):
-        token = auth.make_editor_token(company, int(hours))
+        token = auth.make_short_token(company, int(hours))
         link = f"./?token={token}"
         st.code(token, language="text")
         st.write("Share this link:")
@@ -180,28 +180,25 @@ def page_faq():
     header(st.session_state.company)
     st.subheader("FAQ")
     qa = [
-        ("How do I filter orders?", "Use the Filters panel at the top of each page. Choose Warehouse/Status/Priority, set dates, or type in the search box."),
-        ("How do I update a status or invoice?", "Open any warehouse tab, select an Order from the dropdown, choose a new Status, set Invoice No. if needed, then click Update."),
-        ("Where can I see KPIs?", "KPIs appear above every table: Open, Due Today, Overdue, and Invoiced This Week."),
-        ("Can I export the view?", "Yes. Use the Export buttons to download Excel or PDF with your company header."),
-        ("What happens to my edits?", "This is a demo. Edits are temporary to your session and reset automatically when the session ends."),
-        ("Can multiple managers use it?", "Yes. Each session is isolated. In production we can add a database for multi-user concurrency."),
+        ("How do I filter orders?", "Use the Filters panel at the top of each page."),
+        ("How do I update a status or invoice?", "Open any warehouse tab, select an Order and update."),
+        ("Where can I see KPIs?", "KPIs appear above every table."),
+        ("Can I export the view?", "Yes, use the Export buttons."),
+        ("What happens to my edits?", "This is a demo, edits reset after session ends."),
+        ("Can multiple managers use it?", "Yes, each session is isolated."),
         ("What statuses exist?", "New, In Progress, On Hold, Completed, and Invoiced."),
-        ("Do you log changes?", "Yes. The Log page lists DateTime, User, OrderID, and From→To for this session."),
-        ("How do I access as Editor?", "The admin generates a signed token link. No password required for the editor role."),
-        ("Can this integrate with MYOB EXO or others?", "Yes. This demo is designed to be extended with a database and integrations later."),
+        ("Do you log changes?", "Yes, the Log page lists changes for this session."),
+        ("How do I access as Editor?", "The admin generates a short token link."),
+        ("Can this integrate with MYOB EXO?", "Yes, can be extended in production."),
     ]
     for i, (q, a) in enumerate(qa, 1):
         with st.expander(f"{i}. {q}"):
             st.write(a)
-            if "filter" in q.lower():
-                if st.button("Open Dashboard", key=f"go{i}"):
-                    st.switch_page("app.py")
 
 # ------------------------ URL Token Auto-Login ---------------------------
 query_params = st.query_params
 if "token" in query_params and not st.session_state.role:
-    data = auth.verify(query_params["token"])
+    data = auth.verify_short_token(query_params["token"])
     if data and data.get("role") == "editor":
         st.session_state.role = "editor"
         st.session_state.username = "Client"
