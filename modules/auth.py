@@ -1,10 +1,9 @@
-
 import os, time, hmac, hashlib, base64, json
 from datetime import datetime, timedelta
+import streamlit as st
 
 def get_secret():
-    from streamlit.runtime.secrets import secrets
-    return str(secrets.get("APP_SECRET", "dev_secret_change_me"))
+    return str(st.secrets.get("APP_SECRET", "dev_secret_change_me"))
 
 def b64url(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
@@ -45,9 +44,8 @@ def make_editor_token(company: str, hours_valid: int = 4) -> str:
     return sign(payload)
 
 def get_admin_creds():
-    from streamlit.runtime.secrets import secrets
-    user = secrets.get("ADMIN_USER", "admin")
-    hash_hex = secrets.get("ADMIN_PASSWORD_HASH", "")
+    user = st.secrets.get("ADMIN_USER", "admin")
+    hash_hex = st.secrets.get("ADMIN_PASSWORD_HASH", "")
     return user, hash_hex
 
 def sha256_hex(s: str) -> str:

@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -78,11 +77,9 @@ def page_dashboard():
 
     c1, c2 = st.columns(2)
     with c1:
-        if st.download_button("Export to Excel", to_excel_bytes(df_f), file_name="orders.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"):
-            st.toast("Excel exported.")
+        st.download_button("Export to Excel", to_excel_bytes(df_f), file_name="orders.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     with c2:
-        if st.download_button("Export to PDF", to_pdf_bytes(df_f, st.session_state.company), file_name="orders.pdf", mime="application/pdf"):
-            st.toast("PDF exported.")
+        st.download_button("Export to PDF", to_pdf_bytes(df_f, st.session_state.company), file_name="orders.pdf", mime="application/pdf")
 
 def edit_view(warehouse: str | None):
     ensure_editor()
@@ -141,8 +138,7 @@ def page_admin():
     hours = col2.number_input("Hours Valid", min_value=1, max_value=72, value=4, step=1)
     if st.button("Generate Token", type="primary"):
         token = auth.make_editor_token(company, int(hours))
-        base_url = st.request.url or ""
-        link = base_url.split("?")[0] + f"?token={token}"
+        link = f"./?token={token}"
         st.code(token, language="text")
         st.write("Share this link:")
         st.write(link)
