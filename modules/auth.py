@@ -1,29 +1,35 @@
 import streamlit as st
 import secrets
 import time
+import hashlib
 
-# نخزن التوكنات المولدة في session_state
-if "TOKENS" not in st.session_state:
-    st.session_state.TOKENS = {}
+def _tokens_dict() -> dict:
+    # ensure the dict exists and always use dict-style access
+    return st.session_state.setdefault("TOKENS", {})
 
 def make_short_token(company: str, hours_valid: int = 4) -> str:
-    """Generate short random token and save it in session with metadata"""
+    """Generate a short random token and store its metadata in session_state."""
     token = secrets.token_urlsafe(6)  # ~8 chars
-    st.session_state.TOKENS[token] = {
+    tokens = _tokens_dict()
+    tokens[token] = {
         "role": "editor",
         "company": company,
         "exp": time.time() + hours_valid * 3600,
     }
+    # write back explicitly (defensive)
+    st.session_state["TOKENS"] = tokens
     return token
 
 def verify_short_token(token: str) -> dict | None:
-    """Check if token exists and not expired"""
-    data = st.session_state.TOKENS.get(token)
+    """Return token metadata if valid; otherwise None."""
+    tokens = _tokens_dict()
+    data = tokens.get(token)
     if not data:
         return None
-    if time.time() > data["exp"]:
-        # لو التوكن انتهى نشيله
-        st.session_state.TOKENS.pop(token, None)
+    if time.time() > data.get("exp", 0):
+        # expire and remove
+        tokens.pop(token, None)
+        st.session_state["TOKENS"] = tokens
         return None
     return data
 
@@ -33,7 +39,6 @@ def get_admin_creds():
     return user, hash_hex
 
 def sha256_hex(s: str) -> str:
-    import hashlib
     return hashlib.sha256(s.encode()).hexdigest()
 
 def check_admin_password(password: str) -> bool:
