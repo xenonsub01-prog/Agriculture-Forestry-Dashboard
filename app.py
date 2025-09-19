@@ -77,9 +77,19 @@ def page_dashboard():
 
     c1, c2 = st.columns(2)
     with c1:
-        st.download_button("Export to Excel", to_excel_bytes(df_f), file_name="orders.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        st.download_button(
+            "Export to Excel",
+            to_excel_bytes(df_f),
+            file_name="orders.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
     with c2:
-        st.download_button("Export to PDF", to_pdf_bytes(df_f, st.session_state.company), file_name="orders.pdf", mime="application/pdf")
+        st.download_button(
+            "Export to PDF",
+            to_pdf_bytes(df_f, st.session_state.company),
+            file_name="orders.pdf",
+            mime="application/pdf",
+        )
 
 def edit_view(warehouse: str | None):
     ensure_editor()
@@ -95,11 +105,17 @@ def edit_view(warehouse: str | None):
     if row:
         current = st.session_state.df[st.session_state.df["OrderID"] == row].iloc[0]
         col1, col2, col3 = st.columns(3)
-        new_status = col1.selectbox("New Status", ["New", "In Progress", "On Hold", "Completed", "Invoiced"], index=["New","In Progress","On Hold","Completed","Invoiced"].index(current["Status"]))
+        new_status = col1.selectbox(
+            "New Status",
+            ["New", "In Progress", "On Hold", "Completed", "Invoiced"],
+            index=["New","In Progress","On Hold","Completed","Invoiced"].index(current["Status"]),
+        )
         new_invoice = col2.text_input("Invoice No.", value=current["InvoiceNo"] if current["InvoiceNo"] else "")
         col3.write("")
         if col3.button("Update", type="primary"):
-            st.session_state.df, old_status = update_row(st.session_state.df, row, new_status, new_invoice, st.session_state.username or "User")
+            st.session_state.df, old_status = update_row(
+                st.session_state.df, row, new_status, new_invoice, st.session_state.username or "User"
+            )
             st.session_state.log.append({
                 "DateTime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "User": st.session_state.username or "User",
@@ -113,9 +129,19 @@ def edit_view(warehouse: str | None):
 
     c1, c2 = st.columns(2)
     with c1:
-        st.download_button("Export to Excel", to_excel_bytes(df_f), file_name=f"{warehouse or 'master'}_orders.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        st.download_button(
+            "Export to Excel",
+            to_excel_bytes(df_f),
+            file_name=f"{warehouse or 'master'}_orders.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
     with c2:
-        st.download_button("Export to PDF", to_pdf_bytes(df_f, st.session_state.company), file_name=f"{warehouse or 'master'}_orders.pdf", mime="application/pdf")
+        st.download_button(
+            "Export to PDF",
+            to_pdf_bytes(df_f, st.session_state.company),
+            file_name=f"{warehouse or 'master'}_orders.pdf",
+            mime="application/pdf",
+        )
 
 def page_log():
     ensure_editor()

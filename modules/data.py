@@ -1,4 +1,3 @@
-
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
@@ -40,15 +39,22 @@ def filter_df(df: pd.DataFrame, warehouse: list[str] | None = None, status: list
     return out
 
 def kpis(df: pd.DataFrame) -> dict:
-    from datetime import date, timedelta, datetime
-    today = date.today().isoformat()
-    # Invoices this week
-    d = pd.to_datetime(df["LastUpdatedOn"], errors="coerce")
-    this_week = (d.dt.date >= (datetime.today().date() - pd.to_timedelta(d.dt.weekday, unit="D")))
-    invoiced_this_week = int(((df["Status"] == "Invoiced") & this_week.fillna(False)).sum())
+    # Parse due dates and last updates
+    due = pd.to_datetime(df["DueDate"], errors="coerce").dt.date
+    last_upd = pd.to_datetime(df["LastUpdatedOn"], errors="coerce")
+
+    # Today and start of week (Monday)
+    now_ts = pd.Timestamp.now().normalize()
+    start_week = now_ts - pd.Timedelta(days=now_ts.weekday())
+
+    open_mask = df["Status"].isin(["New", "In Progress", "On Hold"])
+    due_today_mask = (due == pd.Timestamp.now().date())
+    overdue_mask = (due < pd.Timestamp.now().date())
+    invoiced_this_week_mask = (df["Status"] == "Invoiced") & (last_upd >= start_week)
+
     return {
-        "Open": int((df["Status"].isin(["New", "In Progress", "On Hold"])).sum()),
-        "Due Today": int((df["DueDate"] == today).sum()),
-        "Overdue": int((df["DueDate"] < today).sum()),
-        "Invoiced This Week": invoiced_this_week,
+        "Open": int(open_mask.sum()),
+        "Due Today": int(due_today_mask.sum()),
+        "Overdue": int(overdue_mask.sum()),
+        "Invoiced This Week": int(invoiced_this_week_mask.sum()),
     }
