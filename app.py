@@ -97,7 +97,7 @@ def edit_view(warehouse: str | None):
     df = st.session_state.df
     if warehouse:
         df = df[df["Warehouse"] == warehouse]
-    df_f = filter_df = filter_panel(df)
+    df_f = filter_panel(df)
     kpi_row(df_f)
 
     st.write("Select a row to update status and invoice:")
@@ -164,10 +164,10 @@ def page_admin():
     hours = col2.number_input("Hours Valid", min_value=1, max_value=72, value=4, step=1)
     if st.button("Generate Token", type="primary"):
         token = auth.make_short_token(company, int(hours))
-        link = f"./?token={token}"
-        st.code(token, language="text")
-        st.write("Share this link:")
-        st.write(link)
+        app_url = "https://agriculture-forestry-dashboard-uzu2pyhyl4jnf2xbjazlaf.streamlit.app"
+        full_link = f"{app_url}/?token={token}"
+        st.code(full_link, language="text")
+        st.success("Share this link with the client.")
 
     st.divider()
     if st.button("Reset Demo (this session)"):
